@@ -3,51 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#d7262e">
+<meta name="theme-color" content="#14161a">
 <title>FilaVoz</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ===== CONFIGURAÇÃO DO SUPABASE =====
+   Cole aqui a URL e a chave "anon public" do seu projeto
+   (Supabase > Project Settings > API). Sem isso o app funciona só neste aparelho. */
+window.FILAVOZ_CFG = {
+  url: 'https://eekxlhnbcvdocpcyqhvj.supabase.co',   // ex: 'https://abcdefgh.supabase.co'
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVla3hsaG5iY3Zkb2NwY3lxaHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3NjcyODEsImV4cCI6MjExMDM0MzI4MX0.LCUUjI-hOBqHuOMZxTG9szF6pgqOm-Zl2sJzcCpNd04'    // ex: 'eyJhbGciOi...'
+};
+</script>
 <style>
 /* VOICE: balcão de atendimento — direto, grande, legível de longe
-   IDEA: o painel de senhas de um posto de saúde
-   PICTURE: o botão vermelho central e o nome chamado em letras enormes
+   IDEA: o painel de senhas de um posto de saúde, ligado ao consultório
+   PICTURE: o botão vermelho do médico e o nome chamado em letras enormes
    COLOUR and TYPE: branco, tinta quase preta, vermelho de sinal; Archivo
-   LAYOUT: uma coluna de celular: chamado agora, botão, nova chegada, fila */
+   LAYOUT: uma coluna de celular; a ordem muda entre Recepção e Médico */
 :root{color-scheme:light dark;--bg:light-dark(#f4f5f7,#0f1114);--card:light-dark(#fff,#1a1d22);--ink:light-dark(#14161a,#eef0f3);--mut:light-dark(#646a73,#9aa1ab);--line:light-dark(#e3e6ea,#2b3038);--red:#d7262e;--blue:#1f5fd6;--ok:#178a4c}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Archivo,system-ui,sans-serif;overflow-x:clip}
-header{position:sticky;top:0;z-index:5;background:#14161a;color:#fff;display:flex;align-items:center;gap:10px;padding:10px max(4vw,14px)}
-header b{font-size:20px;font-weight:900;flex:1}header b i{color:var(--red);font-style:normal}
+header{position:sticky;top:0;z-index:5;background:#14161a;color:#fff;display:flex;align-items:center;gap:8px;padding:8px max(4vw,12px)}
+header .br{flex:1;line-height:1.1}header .br b{font-size:20px;font-weight:900}header .br b i{color:var(--red);font-style:normal}
+header .br span{display:block;font-size:12px;color:#aab}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#888;margin-right:4px}.dot.on{background:#2ecc71}.dot.off{background:#e74c3c}
 .hb{background:#2a2e35;color:#fff;border:0;border-radius:10px;padding:0 12px;height:40px;font:600 14px Archivo,sans-serif;cursor:pointer}
-main{max-width:560px;margin:0 auto;padding:14px 14px 60px;display:grid;gap:14px}
+main{max-width:560px;margin:0 auto;padding:14px 14px 60px;display:flex;flex-direction:column;gap:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
 .lab{font-size:13px;font-weight:700;color:var(--mut);display:flex;justify-content:space-between;gap:8px;margin-bottom:6px}
-#cur .tk{font-size:15px;font-weight:700;color:var(--red)}
+#cur .tk{color:var(--red)}
 #cur .nm{font-size:clamp(32px,10vw,50px);font-weight:900;line-height:1.05;text-wrap:balance;margin:2px 0 6px;overflow-wrap:anywhere}
 #cur .meta{color:var(--mut);font-size:14px}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .btn{height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 15px Archivo,sans-serif;padding:0 14px;cursor:pointer}
-.btn:focus-visible,.hb:focus-visible,#big:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.dk{background:#14161a;color:#fff;border-color:#14161a}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .wrap{display:grid;place-items:center;padding:6px 0}
-#big{width:min(68vw,250px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;color:#fff;background:radial-gradient(circle at 35% 30%,#ff5b62,var(--red) 55%,#9e1219);box-shadow:0 14px 30px rgba(215,38,46,.4),inset 0 -8px 0 rgba(0,0,0,.18);font:900 clamp(24px,7vw,32px)/1.05 Archivo,sans-serif;display:grid;place-content:center;gap:8px;transition:transform .12s}
-#big:active{transform:scale(.95)}#big.off{filter:grayscale(.75);opacity:.7}
-#big small{font:700 14px Archivo,sans-serif;background:rgba(0,0,0,.25);border-radius:20px;padding:3px 10px;justify-self:center}
+#big{width:min(70vw,260px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;color:#fff;background:radial-gradient(circle at 35% 30%,#ff5b62,var(--red) 55%,#9e1219);box-shadow:0 14px 30px rgba(215,38,46,.4),inset 0 -8px 0 rgba(0,0,0,.18);font:900 clamp(24px,7vw,32px)/1.05 Archivo,sans-serif;display:grid;place-content:center;gap:8px;transition:transform .12s}
+#big:active{transform:scale(.95)}#big.off{filter:grayscale(.75);opacity:.7}#big[disabled]{opacity:.5}
+#big small{font:700 14px Archivo,sans-serif;background:rgba(0,0,0,.25);border-radius:20px;padding:3px 10px;justify-self:center;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.rec #big{width:min(48vw,170px);font-size:20px}body.rec #big small{font-size:12px}
+body.med #addc{order:5}body.rec #addc{order:-1}
 #mic{width:100%;height:64px;border:0;border-radius:14px;background:var(--blue);color:#fff;font:800 18px Archivo,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
 #mic.on{background:var(--red);animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 10px rgba(215,38,46,.2)}}
 @media(prefers-reduced-motion:reduce){#mic.on{animation:none}#big{transition:none}}
 #heard{min-height:22px;font-size:15px;color:var(--mut);margin:8px 2px 0}
 form{display:flex;gap:8px;margin-top:8px}
-input{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:16px Archivo,sans-serif;padding:0 12px}
-.add{background:#14161a;color:#fff;border:0}
-:root[data-theme=dark] .add{background:#eef0f3;color:#14161a}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .add{background:#eef0f3;color:#14161a}}
+input{flex:1;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:16px Archivo,sans-serif;padding:0 12px;width:100%}
 ol{list-style:none;margin:0;padding:0}
-ol li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+ol li{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 ol li:first-child{border-top:0}
 .n{flex:none;width:42px;height:42px;border-radius:10px;background:var(--bg);display:grid;place-items:center;font-weight:900}
-li .who{flex:1}li .who b{display:block;font-size:17px;overflow-wrap:anywhere}li .who span{font-size:13px;color:var(--mut);white-space:nowrap}
+li .who{flex:1}li .who b{display:block;font-size:17px;overflow-wrap:anywhere}li .who span{font-size:13px;color:var(--mut)}
 .ic{flex:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:grid;place-items:center}
 .empty{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--mut)}
 .pill{background:var(--bg);border-radius:20px;padding:1px 9px;color:var(--ink)}
@@ -57,38 +68,69 @@ details summary{cursor:pointer;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}td,th{padding:6px 4px;border-top:1px solid var(--line);text-align:left}td.r,th.r{text-align:right;white-space:nowrap}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#14161a;color:#fff;border-radius:12px;padding:10px 14px;display:none;gap:12px;align-items:center;z-index:9;max-width:92vw}
 #toast button{background:none;border:0;color:#7fb0ff;font:700 15px Archivo,sans-serif;cursor:pointer}
-#dlg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;place-items:center;z-index:10;padding:16px}
-#dlg .card{width:min(420px,100%)}#dlg h3{margin:0 0 10px;font-size:20px}
-.warn{background:#fff4d6;color:#5b4300;border-radius:12px;padding:10px 12px;font-size:14px;display:none}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;z-index:10;padding:16px}
+.ov .card{width:min(440px,100%);max-height:90vh;overflow:auto}.ov h3{margin:0 0 10px;font-size:21px}
+.warn{background:#fff4d6;color:#5b4300;border-radius:12px;padding:10px 12px;font-size:14px}
+.big2{width:100%;height:60px;font-size:17px;margin-top:10px}
+.tg{display:flex;align-items:center;gap:10px;margin:12px 0;font-weight:600}.tg input{width:22px;height:22px;flex:none}
+code{background:var(--bg);padding:2px 6px;border-radius:6px;overflow-wrap:anywhere;font-size:13px}
 </style>
 </head>
 <body>
-<header><b>Fila<i>Voz</i></b><button class="hb" id="test">Testar voz</button><button class="hb" id="reset">Zerar dia</button></header>
-<main>
+<header>
+  <div class="br"><b>Fila<i>Voz</i></b><span><i class="dot" id="dot"></i><span id="hs" style="display:inline"></span></span></div>
+  <button class="hb" id="test">Testar voz</button><button class="hb" id="menu">Menu</button>
+</header>
+<main id="app" style="display:none">
+  <div class="warn" id="local" style="display:none">Modo só neste aparelho: o Supabase ainda não foi configurado no arquivo. A recepção e o médico não vão se enxergar.</div>
   <section class="card" id="cur"></section>
-
   <div class="wrap"><button id="big" aria-label="Chamar próximo">CHAMAR<br>PRÓXIMO<small id="bigc">Fila vazia</small></button></div>
-
-  <section class="card">
-    <div class="lab"><span>Nova chegada</span><span>Passe o celular para o cliente</span></div>
-    <div class="warn" id="nosr">Este navegador não reconhece voz. Use o Chrome no Android, num endereço https. Enquanto isso, digite o nome abaixo.</div>
+  <section class="card" id="addc">
+    <div class="lab"><span>Nova chegada</span><span id="addh">Passe o celular para o paciente</span></div>
+    <div class="warn" id="nosr" style="display:none">Este navegador não reconhece voz. Use o Chrome, num endereço https. Enquanto isso, digite o nome.</div>
     <button id="mic"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12z"/></svg><span id="micl">FALAR O NOME</span></button>
     <p id="heard"></p>
-    <form id="f"><input id="nm" placeholder="Ou digite o nome" autocomplete="off" enterkeyhint="done"><button class="btn add">+ Adicionar</button></form>
+    <form id="f"><input id="nm" placeholder="Ou digite o nome" autocomplete="off" enterkeyhint="done"><button class="btn dk">+ Adicionar</button></form>
   </section>
-
   <section class="card">
     <div class="lab"><span>Fila de espera <span class="pill" id="qc">0</span></span><span>Ordem de chegada</span></div>
     <div id="q"></div>
   </section>
-
   <section class="card">
     <div class="stats" id="st"></div>
     <details style="margin-top:12px"><summary>Atendidos hoje</summary><div id="done"></div></details>
   </section>
 </main>
+
+<!-- configuração inicial -->
+<div class="ov" id="setup"><div class="card">
+  <h3>Configurar este aparelho</h3>
+  <p style="margin:0 0 8px;color:var(--mut)">Use o mesmo código de sala na recepção e no celular do médico.</p>
+  <input id="sala" placeholder="Código da sala (ex: dra-ana-4821)" autocomplete="off">
+  <button class="btn pri big2" id="asRec">Este é o aparelho da RECEPÇÃO</button>
+  <button class="btn dk big2" id="asMed">Este é o celular do MÉDICO</button>
+  <p style="font-size:13px;color:var(--mut);margin:12px 0 0">A recepção fala as chamadas em voz alta na sala de espera. O médico só aperta o botão vermelho.</p>
+</div></div>
+
+<!-- toque inicial para liberar o som -->
+<div class="ov" id="unlock"><div class="card" style="text-align:center">
+  <h3 id="ut">Recepção</h3><p style="color:var(--mut);margin:0">Toque para começar. O navegador precisa de um toque para liberar o som.</p>
+  <button class="btn pri big2" id="go">Começar</button>
+</div></div>
+
+<!-- menu -->
+<div class="ov" id="mn"><div class="card">
+  <h3>Menu</h3>
+  <p style="margin:0 0 6px;font-size:14px">Sala: <b id="mnSala"></b> · este aparelho: <b id="mnModo"></b></p>
+  <label class="tg"><input type="checkbox" id="spk"> Este aparelho fala as chamadas em voz alta</label>
+  <p style="font-size:14px;margin:6px 0">Links para abrir direto em cada aparelho:</p>
+  <div class="row" style="margin-top:4px"><button class="btn" id="cpMed">Copiar link do médico</button><button class="btn" id="cpRec">Copiar link da recepção</button></div>
+  <div class="row"><button class="btn" id="swap">Trocar sala ou função</button><button class="btn" id="reset" style="color:var(--red)">Zerar o dia</button></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn dk" id="mnx">Fechar</button></div>
+</div></div>
+
+<div class="ov" id="dlg"><div class="card"><h3 id="dt"></h3><div id="db"></div><div class="row" style="justify-content:flex-end"><button class="btn" id="dno">Cancelar</button><button class="btn dk" id="dok">OK</button></div></div></div>
 <div id="toast"><span id="tmsg"></span><button id="tundo">Desfazer</button></div>
-<div id="dlg"><div class="card"><h3 id="dt"></h3><div id="db"></div><div class="row" style="justify-content:flex-end"><button class="btn" id="dno">Cancelar</button><button class="btn add" id="dok">OK</button></div></div></div>
 
 <script>
 {
@@ -96,12 +138,58 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const mins=ms=>{const m=Math.max(0,Math.round(ms/60000));return m<60?m+' min':Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')};
-const KEY='filavoz-v2';
-let S={queue:[],cur:null,done:[],next:1,day:new Date().toDateString()};
-try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.queue)S=s}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const EMPTY=()=>({queue:[],cur:null,done:[],next:1,seq:0});
 
-/* ---------- voz (falar) ---------- */
+/* ---------- sala e função ---------- */
+const P=new URLSearchParams(location.search);
+let sala=(P.get('sala')||ls.get('fv-sala')||'').trim().toLowerCase();
+let modo=P.get('modo')||ls.get('fv-modo')||'';
+if(modo!=='rec'&&modo!=='med')modo='';
+const linkFor=m=>location.origin+location.pathname+'?sala='+encodeURIComponent(sala)+'&modo='+m;
+
+/* ---------- banco (Supabase) ---------- */
+const CFG=window.FILAVOZ_CFG||{};
+const db=(CFG.url&&CFG.key&&window.supabase)?window.supabase.createClient(CFG.url,CFG.key):null;
+let S=EMPTY(),V=0,lastSeq=null,online=false;
+
+function setOnline(on,msg){online=on;$('dot').className='dot '+(on?'on':'off');$('hs').textContent=(modo==='med'?'Médico':'Recepção')+' · '+sala+(msg?' · '+msg:'')}
+function apply(row){
+  if(!row||row.versao<V)return;
+  S=row.estado||EMPTY();V=row.versao;
+  if(lastSeq===null)lastSeq=S.seq;
+  else if(S.seq>lastSeq){lastSeq=S.seq;if(speaks()&&S.cur)announce(S.cur)}
+  if(!db)ls.set('fv-local-'+sala,JSON.stringify({estado:S,versao:V}));
+  render();
+}
+async function fetchRow(){
+  const {data,error}=await db.from('filas').select('estado,versao').eq('sala',sala).maybeSingle();
+  if(error)throw error;
+  if(data)return data;
+  const ins=await db.from('filas').insert({sala,estado:EMPTY(),versao:0}).select('estado,versao').maybeSingle();
+  if(ins.error){const again=await db.from('filas').select('estado,versao').eq('sala',sala).maybeSingle();if(again.error)throw again.error;return again.data}
+  return ins.data;
+}
+async function refresh(){
+  if(!db)return;
+  try{const r=await fetchRow();setOnline(true);if(r.versao!==V||lastSeq===null)apply(r)}catch(e){setOnline(false,'sem conexão')}
+}
+/* muda a fila de forma segura: se outro aparelho mudou ao mesmo tempo, tenta de novo */
+async function mutate(fn){
+  if(!db){const st=structuredClone(S);fn(st);apply({estado:st,versao:V+1});return true}
+  let base={estado:S,versao:V};
+  for(let i=0;i<6;i++){
+    const st=structuredClone(base.estado);fn(st);
+    const {data,error}=await db.from('filas').update({estado:st,versao:base.versao+1,atualizado:new Date().toISOString()}).eq('sala',sala).eq('versao',base.versao).select('estado,versao');
+    if(error){setOnline(false,'erro ao salvar');toast('Não consegui salvar. Verifique a internet.');return false}
+    if(data&&data.length){setOnline(true);apply(data[0]);return true}
+    try{base=await fetchRow()}catch(e){setOnline(false,'sem conexão');return false}
+  }
+  toast('Muitas alterações ao mesmo tempo. Tente de novo.');return false;
+}
+
+/* ---------- voz ---------- */
+const speaks=()=>{const v=ls.get('fv-fala-'+modo);return v===null?modo==='rec':v==='1'};
 let voice=null;
 const pickVoice=()=>{const v=speechSynthesis.getVoices();voice=v.find(x=>/pt[-_]BR/i.test(x.lang)&&/google/i.test(x.name))||v.find(x=>/pt[-_]BR/i.test(x.lang))||v.find(x=>/^pt/i.test(x.lang))||null};
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
@@ -112,63 +200,64 @@ function say(parts){
 }
 let actx=null;
 function chime(){
-  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    [[880,0],[660,.35]].forEach(([f,d])=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='sine';
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();
+    [[880,0],[660,.35]].forEach(([f,d])=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;
       const t=actx.currentTime+d;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.6,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.6);
       o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.65)})}catch(e){}
 }
-function announce(p){
-  chime();
-  const msg=`Senha ${p.n}. ${p.name}. Por favor, pode entrar.`;
-  setTimeout(()=>say([msg,`Repetindo: ${p.name}, senha ${p.n}.`]),800);
-}
+function announce(p){chime();setTimeout(()=>say([`Senha ${p.n}. ${p.name}. Por favor, pode entrar.`,`Repetindo: ${p.name}, senha ${p.n}.`]),800)}
 
-/* ---------- ouvir (reconhecimento) ---------- */
+/* ---------- ouvir o nome ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let rec=null,listening=false;
 const clean=t=>{
-  t=t.trim().replace(/[.,!?]+$/,'')
-   .replace(/^(ol[aá],?\s*)?(o\s+)?(meu nome [eé]|me chamo|eu me chamo|eu sou( o| a)?|sou( o| a)?|aqui [eé]( o| a)?|[eé]( o| a)?)\s+/i,'');
-  return t.split(/\s+/).map(w=>/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ').slice(0,60);
+  t=t.trim().replace(/[.,!?]+$/,'').replace(/^(ol[aá],?\s*)?(o\s+)?(meu nome [eé]|me chamo|eu me chamo|eu sou( o| a)?|sou( o| a)?|aqui [eé]( o| a)?|[eé]( o| a)?)\s+/i,'');
+  return t.split(/\s+/).filter(Boolean).map(w=>/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ').slice(0,60);
 };
 if(!SR){$('nosr').style.display='block';$('mic').style.display='none'}
 else{
   rec=new SR();rec.lang='pt-BR';rec.interimResults=true;rec.maxAlternatives=1;rec.continuous=false;
-  rec.onresult=e=>{let fin='',tmp='';for(const r of e.results){(r.isFinal?(fin+=r[0].transcript):(tmp+=r[0].transcript))}
+  rec.onresult=e=>{let fin='',tmp='';for(const r of e.results){if(r.isFinal)fin+=r[0].transcript;else tmp+=r[0].transcript}
     $('heard').textContent=(fin||tmp)?'Ouvi: '+(fin||tmp):'';
     if(fin){const n=clean(fin);if(n)addPerson(n,true)}};
-  rec.onerror=e=>{$('heard').textContent=e.error==='not-allowed'||e.error==='service-not-allowed'?'Microfone bloqueado. Libere o microfone para este site nas configurações do navegador.':e.error==='no-speech'?'Não ouvi nada. Toque e fale de novo.':'Erro: '+e.error};
+  rec.onerror=e=>{$('heard').textContent=/not-allowed/.test(e.error)?'Microfone bloqueado. Libere o microfone para este site nas configurações do Chrome.':e.error==='no-speech'?'Não ouvi nada. Toque e fale de novo.':'Erro: '+e.error};
   rec.onend=()=>{listening=false;$('mic').classList.remove('on');$('micl').textContent='FALAR O NOME'};
 }
 $('mic').onclick=()=>{
-  if(!rec)return;
-  if(listening){rec.stop();return}
-  speechSynthesis&&speechSynthesis.cancel();
+  if(!rec)return;if(listening){rec.stop();return}
+  if('speechSynthesis' in window)speechSynthesis.cancel();
   try{rec.start();listening=true;$('mic').classList.add('on');$('micl').textContent='OUVINDO... DIGA SEU NOME';$('heard').textContent=''}catch(e){}
 };
 
-/* ---------- fila ---------- */
+/* ---------- ações ---------- */
 let undoFn=null,tt=null;
-function toast(msg,undo){$('tmsg').textContent=msg;undoFn=undo;$('tundo').style.display=undo?'':'none';$('toast').style.display='flex';clearTimeout(tt);tt=setTimeout(()=>$('toast').style.display='none',6000)}
+function toast(msg,undo){$('tmsg').textContent=msg;undoFn=undo||null;$('tundo').style.display=undo?'':'none';$('toast').style.display='flex';clearTimeout(tt);tt=setTimeout(()=>$('toast').style.display='none',6000)}
 $('tundo').onclick=()=>{if(undoFn)undoFn();undoFn=null;$('toast').style.display='none'};
 
-function addPerson(name,spoken){
-  const p={id:Date.now()+Math.random(),n:S.next++,name,t:Date.now()};
-  S.queue.push(p);save();render();
+async function addPerson(name,spoken){
+  let p;
+  const ok=await mutate(st=>{p={id:Date.now()+'-'+Math.random().toString(36).slice(2,6),n:st.next++,name,t:Date.now()};st.queue.push(p)});
+  if(!ok)return;
   say([`${name}, sua senha é ${p.n}. Aguarde ser chamado.`]);
-  toast(`Senha ${p.n}: ${name}${spoken?' (toque no lápis para corrigir)':''}`,()=>{S.queue=S.queue.filter(x=>x.id!==p.id);S.next--;save();render()});
+  toast(`Senha ${p.n}: ${name}${spoken?' (toque no lápis para corrigir)':''}`,()=>mutate(st=>{st.queue=st.queue.filter(x=>x.id!==p.id)}));
 }
 $('f').onsubmit=e=>{e.preventDefault();const n=clean($('nm').value);if(!n)return;$('nm').value='';addPerson(n,false)};
 
-function callNext(p){
-  if(!p){say(['Não há ninguém na fila.']);toast('Fila vazia');return}
-  if(S.cur)S.done.unshift({...S.cur,end:Date.now()});
-  S.queue=S.queue.filter(x=>x.id!==p.id);
-  S.cur={...p,called:Date.now()};save();render();announce(S.cur);
+async function callNext(id){
+  if(!S.queue.length){toast('Ninguém na fila');return}
+  $('big').disabled=true;
+  await mutate(st=>{
+    const p=id?st.queue.find(x=>x.id===id):st.queue[0];if(!p)return;
+    if(st.cur)st.done.unshift({...st.cur,end:Date.now()});
+    st.done=st.done.slice(0,300);
+    st.queue=st.queue.filter(x=>x.id!==p.id);
+    st.cur={...p,called:Date.now()};st.seq++;
+  });
+  $('big').disabled=false;
+  if(!speaks()&&S.cur)toast(`Chamando ${S.cur.name} na recepção`);
 }
-$('big').onclick=()=>callNext(S.queue[0]);
+$('big').onclick=()=>callNext(null);
 
-/* ---------- diálogo ---------- */
 let dlgOk=null;
 function dialog(title,html,ok){$('dt').textContent=title;$('db').innerHTML=html;dlgOk=ok;$('dlg').style.display='grid';const i=$('db').querySelector('input');if(i){i.focus();i.select()}}
 $('dno').onclick=()=>$('dlg').style.display='none';
@@ -176,45 +265,88 @@ $('dok').onclick=()=>{$('dlg').style.display='none';if(dlgOk)dlgOk()};
 
 $('q').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
-  const p=S.queue.find(x=>String(x.id)===b.dataset.id);if(!p)return;
-  if(b.dataset.a==='edit')dialog('Corrigir nome',`<input id="en" value="${esc(p.name)}">`,()=>{const v=clean($('en').value);if(v){p.name=v;save();render()}});
-  if(b.dataset.a==='del'){const i=S.queue.indexOf(p);S.queue.splice(i,1);save();render();toast(`${p.name} saiu da fila`,()=>{S.queue.splice(i,0,p);save();render()})}
-  if(b.dataset.a==='call')callNext(p);
+  const id=b.dataset.id,p=S.queue.find(x=>x.id===id);if(!p)return;
+  if(b.dataset.a==='edit')dialog('Corrigir nome',`<input id="en" value="${esc(p.name)}">`,()=>{const v=clean($('en').value);if(v)mutate(st=>{const x=st.queue.find(y=>y.id===id);if(x)x.name=v})});
+  if(b.dataset.a==='del')mutate(st=>{st.queue=st.queue.filter(x=>x.id!==id)}).then(ok=>ok&&toast(`${p.name} saiu da fila`,()=>mutate(st=>{st.queue.push(p);st.queue.sort((a,b)=>a.t-b.t)})));
+  if(b.dataset.a==='call')callNext(id);
 };
 $('cur').onclick=e=>{
   const a=e.target.closest('button')?.dataset.a;if(!a||!S.cur)return;
-  if(a==='again')announce(S.cur);
-  if(a==='finish'){S.done.unshift({...S.cur,end:Date.now()});S.cur=null;save();render()}
+  if(a==='again')mutate(st=>{st.seq++});
+  if(a==='finish')mutate(st=>{if(st.cur){st.done.unshift({...st.cur,end:Date.now()});st.cur=null}});
 };
 $('test').onclick=()=>{chime();setTimeout(()=>say(['Teste de voz. Senha 1. Maria da Silva. Por favor, pode entrar.']),800)};
-$('reset').onclick=()=>dialog('Zerar o dia?','<p style="margin:0">Apaga a fila, quem está em atendimento e o histórico de hoje, e volta a senha para 1.</p>',()=>{S={queue:[],cur:null,done:[],next:1,day:new Date().toDateString()};save();render()});
+
+/* ---------- menu ---------- */
+$('menu').onclick=()=>{$('mnSala').textContent=sala;$('mnModo').textContent=modo==='med'?'médico':'recepção';$('spk').checked=speaks();$('mn').style.display='grid'};
+$('mnx').onclick=()=>$('mn').style.display='none';
+$('spk').onchange=e=>ls.set('fv-fala-'+modo,e.target.checked?'1':'0');
+const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('Link copiado. Envie pelo WhatsApp.')}catch(e){dialog('Copie o link',`<input value="${esc(t)}" readonly>`,null)}};
+$('cpMed').onclick=()=>copy(linkFor('med'));
+$('cpRec').onclick=()=>copy(linkFor('rec'));
+$('swap').onclick=()=>{$('mn').style.display='none';$('sala').value=sala;$('setup').style.display='grid'};
+$('reset').onclick=()=>{$('mn').style.display='none';dialog('Zerar o dia?','<p style="margin:0">Apaga a fila, quem está em atendimento e o histórico de hoje, e volta a senha para 1, nos dois aparelhos.</p>',()=>mutate(st=>{const s=st.seq;Object.assign(st,EMPTY(),{seq:s})}))};
 
 /* ---------- desenhar ---------- */
 const ic={edit:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.2V21h3.8l11-11-3.8-3.8-11 11zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.8 3.8L20.7 7z"/></svg>',
  del:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>',
  call:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg>'};
 function render(){
-  const now=Date.now(),c=S.cur;
+  const now=Date.now(),c=S.cur,q=S.queue;
   $('cur').innerHTML=c?`<div class="lab"><span>Em atendimento agora</span><span class="tk">Senha ${c.n}</span></div>
     <div class="nm">${esc(c.name)}</div><div class="meta">Chegou ${hm(c.t)} · chamado ${hm(c.called)} · esperou ${mins(c.called-c.t)}</div>
     <div class="row"><button class="btn" data-a="again">Chamar de novo</button><button class="btn" data-a="finish">Encerrar atendimento</button></div>`
-   :`<div class="lab"><span>Em atendimento agora</span></div><div class="nm" style="color:var(--mut);font-size:26px">Ninguém</div><div class="meta">Aperte o botão vermelho para chamar o primeiro da fila.</div>`;
-  const q=S.queue;
+   :`<div class="lab"><span>Em atendimento agora</span></div><div class="nm" style="color:var(--mut);font-size:26px">Ninguém</div><div class="meta">${modo==='med'?'Aperte o botão vermelho para chamar o primeiro da fila.':'Quando o médico apertar o botão, este aparelho chama o próximo em voz alta.'}</div>`;
   $('qc').textContent=q.length;
-  $('bigc').textContent=q.length?`${q.length} na fila · próximo: ${q[0].name.split(' ')[0]}`:'Fila vazia';
+  $('bigc').textContent=q.length?`${q.length} na fila · ${esc(q[0].name.split(' ')[0])}`:'Fila vazia';
   $('big').classList.toggle('off',!q.length);
   $('q').innerHTML=q.length?'<ol>'+q.map((p,i)=>`<li><span class="n">${p.n}</span><span class="who"><b>${esc(p.name)}</b><span>chegou ${hm(p.t)} · esperando ${mins(now-p.t)}${i===0?' · próximo':''}</span></span>
-     <button class="ic" data-a="call" data-id="${p.id}" aria-label="Chamar agora">${ic.call}</button><button class="ic" data-a="edit" data-id="${p.id}" aria-label="Corrigir nome">${ic.edit}</button><button class="ic" data-a="del" data-id="${p.id}" aria-label="Remover">${ic.del}</button></li>`).join('')+'</ol>'
-   :'<div class="empty">Ninguém aguardando.<br>Toque em <b>Falar o nome</b> quando alguém chegar.</div>';
+     <button class="ic" data-a="call" data-id="${esc(p.id)}" aria-label="Chamar agora">${ic.call}</button><button class="ic" data-a="edit" data-id="${esc(p.id)}" aria-label="Corrigir nome">${ic.edit}</button><button class="ic" data-a="del" data-id="${esc(p.id)}" aria-label="Remover">${ic.del}</button></li>`).join('')+'</ol>'
+   :`<div class="empty">Ninguém aguardando.${modo==='rec'?'<br>Toque em <b>Falar o nome</b> quando alguém chegar.':''}</div>`;
   const d=S.done,avg=d.length?d.reduce((a,x)=>a+(x.called-x.t),0)/d.length:0;
   $('st').innerHTML=`<div><b>${d.length}</b><span>atendidos</span></div><div><b>${q.length}</b><span>na fila</span></div><div><b>${d.length?mins(avg):'—'}</b><span>espera média</span></div>`;
   $('done').innerHTML=d.length?`<table><tr><th>Senha</th><th>Nome</th><th class="r">Chegou</th><th class="r">Chamado</th><th class="r">Espera</th></tr>${d.map(x=>`<tr><td>${x.n}</td><td>${esc(x.name)}</td><td class="r">${hm(x.t)}</td><td class="r">${hm(x.called)}</td><td class="r">${mins(x.called-x.t)}</td></tr>`).join('')}</table>`:'<p style="color:var(--mut);margin:8px 0 0">Ainda ninguém atendido hoje.</p>';
 }
-render();setInterval(render,20000);
 
-/* manter a tela acesa */
+/* ---------- iniciar ---------- */
+let chan=null,poll=null;
+function start(){
+  document.body.className=modo;
+  $('setup').style.display='none';
+  history.replaceState(null,'',linkFor(modo));
+  $('ut').textContent=modo==='med'?'Celular do médico':'Aparelho da recepção';
+  $('addh').textContent=modo==='med'?'Também dá para cadastrar daqui':'Passe o celular para o paciente';
+  $('unlock').style.display='grid';
+  V=0;lastSeq=null;S=EMPTY();setOnline(!!db,db?'':'só neste aparelho');
+  $('local').style.display=db?'none':'block';
+  if(chan){db.removeChannel(chan);chan=null}
+  clearInterval(poll);
+  if(db){
+    refresh();
+    chan=db.channel('fila-'+sala).on('postgres_changes',{event:'*',schema:'public',table:'filas',filter:'sala=eq.'+sala},p=>{if(p.new&&p.new.estado){setOnline(true);apply(p.new)}}).subscribe();
+    poll=setInterval(refresh,4000);
+  }else{
+    try{const r=JSON.parse(ls.get('fv-local-'+sala));if(r)apply(r);else apply({estado:EMPTY(),versao:0})}catch(e){apply({estado:EMPTY(),versao:0})}
+  }
+  $('app').style.display='flex';render();
+}
+function choose(m){
+  const s=$('sala').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');
+  if(s.length<4){$('sala').focus();toast('Crie um código de sala com pelo menos 4 letras ou números');return}
+  sala=s;modo=m;ls.set('fv-sala',sala);ls.set('fv-modo',modo);start();
+}
+$('asRec').onclick=()=>choose('rec');$('asMed').onclick=()=>choose('med');
+$('go').onclick=()=>{
+  $('unlock').style.display='none';chime();
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}
+  wake();
+};
 const wake=async()=>{try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}};
-wake();document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){wake();refresh()}});
+setInterval(render,20000);
+
+if(sala&&modo){ls.set('fv-sala',sala);ls.set('fv-modo',modo);start()}
+else{$('sala').value=sala||'';$('setup').style.display='grid'}
 }
 </script>
 </body>
