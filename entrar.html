@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14161a">
+<title>Entrar na fila</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+window.FILAVOZ_CFG = {
+  url: 'https://eekxlhnbcvdocpcyqhvj.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVla3hsaG5iY3Zkb2NwY3lxaHZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3NjcyODEsImV4cCI6MjExMDM0MzI4MX0.LCUUjI-hOBqHuOMZxTG9szF6pgqOm-Zl2sJzcCpNd04'
+};
+</script>
+<style>
+/* VOICE: simples e calmo, para qualquer paciente
+   IDEA: a senha de papel que você pega na entrada, agora no seu celular
+   PICTURE: o número da senha enorme, e a tela vermelha "É a sua vez"
+   COLOUR and TYPE: branco, tinta quase preta, vermelho de sinal; Archivo
+   LAYOUT: uma coluna; uma tela por vez: nome → espera → chamado */
+:root{color-scheme:light dark;--bg:light-dark(#f4f5f7,#0f1114);--card:light-dark(#fff,#1a1d22);--ink:light-dark(#14161a,#eef0f3);--mut:light-dark(#646a73,#9aa1ab);--line:light-dark(#e3e6ea,#2b3038);--red:#d7262e;--blue:#1f5fd6}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 Archivo,system-ui,sans-serif;min-height:100vh}
+header{background:#14161a;color:#fff;padding:14px max(5vw,16px)}
+header b{font-size:20px;font-weight:900}header b i{color:var(--red);font-style:normal}
+header span{display:block;font-size:14px;color:#bbc}
+main{max-width:480px;margin:0 auto;padding:18px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
+h1{font-size:30px;line-height:1.1;margin:0 0 8px;text-wrap:balance}
+p{margin:0 0 12px}.mut{color:var(--mut);font-size:15px}
+#mic{width:100%;height:72px;border:0;border-radius:16px;background:var(--blue);color:#fff;font:800 19px Archivo,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;margin-top:6px}
+#mic.on{background:var(--red)}
+input{width:100%;height:54px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:18px Archivo,sans-serif;padding:0 14px;margin-top:12px}
+.btn{width:100%;height:56px;border-radius:14px;border:0;background:#14161a;color:#fff;font:800 18px Archivo,sans-serif;margin-top:10px;cursor:pointer}
+.btn.lt{background:var(--card);color:var(--ink);border:1px solid var(--line);font-size:16px;height:48px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.tk{text-align:center}
+.tk .lb{font-size:15px;font-weight:700;color:var(--mut)}
+.tk .num{font-size:clamp(90px,34vw,150px);font-weight:900;line-height:1;color:var(--red);margin:4px 0}
+.tk .nm{font-size:24px;font-weight:800;overflow-wrap:anywhere}
+.pos{margin:18px 0 6px;font-size:22px;font-weight:800;text-align:center}
+.tip{background:#fff4d6;color:#5b4300;border-radius:12px;padding:12px;font-size:15px;margin-top:14px}
+#called{position:fixed;inset:0;background:var(--red);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9}
+#called h2{font-size:clamp(44px,14vw,72px);line-height:1;margin:0 0 14px;font-weight:900}
+#called p{font-size:22px;font-weight:700}
+#called .num{font-size:110px;font-weight:900;line-height:1}
+#called button{background:#fff;color:var(--red);max-width:320px}
+.err{color:var(--red);font-weight:700;min-height:22px;margin-top:8px}
+@media(prefers-reduced-motion:no-preference){#called.on h2{animation:pop 1s infinite}@keyframes pop{50%{transform:scale(1.06)}}}
+</style>
+</head>
+<body>
+<header><b>Fila<i>Voz</i></b><span id="place">Entrar na fila</span></header>
+<main>
+  <section class="card" id="vForm" style="display:none">
+    <h1>Chegou? Deixe seu nome.</h1>
+    <p class="mut">Você entra na fila na hora e o seu celular avisa quando for a sua vez.</p>
+    <button id="mic"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12z"/></svg><span id="micl">FALAR MEU NOME</span></button>
+    <input id="nm" placeholder="Ou digite seu nome" autocomplete="name" enterkeyhint="go">
+    <button class="btn" id="join">Entrar na fila</button>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section id="vWait" style="display:none">
+    <div class="card tk">
+      <div class="lb">Sua senha</div>
+      <div class="num" id="wNum"></div>
+      <div class="nm" id="wName"></div>
+      <div class="mut" id="wTime"></div>
+    </div>
+    <div class="pos" id="wPos"></div>
+    <div class="tip">Deixe esta tela aberta e o volume ligado. Quando for a sua vez, o celular toca, vibra e fica vermelho.</div>
+    <button class="btn lt" id="leave">Sair da fila</button>
+  </section>
+
+  <section class="card" id="vEnd" style="display:none;text-align:center">
+    <h1 id="eT">Atendimento concluído</h1><p class="mut" id="eP">Obrigado pela visita.</p>
+    <button class="btn" id="again">Entrar na fila de novo</button>
+  </section>
+
+  <section class="card" id="vBad" style="display:none">
+    <h1>Link incompleto</h1><p class="mut">Aponte a câmera para o QR code do cartaz de novo.</p>
+  </section>
+</main>
+<div id="called"><h2>É A SUA VEZ!</h2><div class="num" id="cNum"></div><p id="cName"></p><p>Pode entrar.</p><button class="btn" id="ok">OK, estou indo</button></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const P=new URLSearchParams(location.search);
+const sala=(P.get('sala')||'').trim().toLowerCase();
+const local=(P.get('local')||'').slice(0,60);
+if(local){$('place').textContent=local;document.title='Fila · '+local}
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const EMPTY=()=>({queue:[],cur:null,done:[],next:1,seq:0});
+const CFG=window.FILAVOZ_CFG||{};
+const db=(CFG.url&&CFG.key&&window.supabase)?window.supabase.createClient(CFG.url,CFG.key):null;
+const KEY='fv-me-'+sala;
+let me=null;try{me=JSON.parse(ls.get(KEY))}catch(e){}
+let S=EMPTY(),V=0,alertedSeq=-1;
+
+const show=v=>['vForm','vWait','vEnd','vBad'].forEach(x=>$(x).style.display=x===v?'block':'none');
+if(!sala||!db){show('vBad')}
+
+/* ---------- banco ---------- */
+async function fetchRow(){
+  const {data,error}=await db.from('filas').select('estado,versao').eq('sala',sala).maybeSingle();
+  if(error)throw error;
+  if(data)return data;
+  const ins=await db.from('filas').insert({sala,estado:EMPTY(),versao:0}).select('estado,versao').maybeSingle();
+  if(ins.error){const a=await db.from('filas').select('estado,versao').eq('sala',sala).maybeSingle();if(a.error)throw a.error;return a.data}
+  return ins.data;
+}
+async function mutate(fn){
+  let base=await fetchRow();
+  for(let i=0;i<6;i++){
+    const st=structuredClone(base.estado);fn(st);
+    const {data,error}=await db.from('filas').update({estado:st,versao:base.versao+1,atualizado:new Date().toISOString()}).eq('sala',sala).eq('versao',base.versao).select('estado,versao');
+    if(error)throw error;
+    if(data&&data.length){apply(data[0]);return true}
+    base=await fetchRow();
+  }
+  return false;
+}
+function apply(row){if(!row||row.versao<V)return;S=row.estado||EMPTY();V=row.versao;render()}
+async function refresh(){if(!db||!sala)return;try{apply(await fetchRow())}catch(e){}}
+
+/* ---------- som e aviso ---------- */
+let actx=null;
+function unlock(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(e){}
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}}
+function chime(){try{unlock();[[880,0],[660,.35],[880,.9],[660,1.25]].forEach(([f,d])=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;const t=actx.currentTime+d;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.7,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.6);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.65)})}catch(e){}}
+function say(t){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';u.rate=.9;const v=speechSynthesis.getVoices().find(x=>/pt[-_]BR/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}
+function alertMe(p){
+  $('cNum').textContent=p.n;$('cName').textContent=p.name;
+  $('called').style.display='flex';$('called').classList.add('on');
+  chime();try{navigator.vibrate&&navigator.vibrate([400,200,400,200,800])}catch(e){}
+  setTimeout(()=>say(`${p.name}, é a sua vez. Pode entrar.`),1500);
+}
+$('ok').onclick=()=>{$('called').style.display='none';$('called').classList.remove('on')};
+
+/* ---------- tela ---------- */
+function render(){
+  if(!sala||!db)return;
+  if(!me){show('vForm');return}
+  const i=S.queue.findIndex(x=>x.id===me.id);
+  if(i>=0){
+    show('vWait');
+    $('wNum').textContent=me.n;$('wName').textContent=me.name;$('wTime').textContent='Chegou às '+hm(me.t);
+    $('wPos').textContent=i===0?'Você é o próximo!':i===1?'1 pessoa na sua frente':i+' pessoas na sua frente';
+    return;
+  }
+  if(S.cur&&S.cur.id===me.id){
+    show('vWait');$('wNum').textContent=me.n;$('wName').textContent=me.name;$('wTime').textContent='Chamado às '+hm(S.cur.called);
+    $('wPos').textContent='É a sua vez. Pode entrar!';
+    if(S.seq!==alertedSeq){alertedSeq=S.seq;alertMe(S.cur)}
+    return;
+  }
+  show('vEnd');
+  const wasDone=S.done.some(x=>x.id===me.id);
+  $('eT').textContent=wasDone?'Atendimento concluído':'Você não está mais na fila';
+  $('eP').textContent=wasDone?'Obrigado pela visita.':'Se foi engano, entre de novo.';
+}
+
+/* ---------- entrar ---------- */
+const clean=t=>{t=t.trim().replace(/[.,!?]+$/,'').replace(/^(ol[aá],?\s*)?(o\s+)?(meu nome [eé]|me chamo|eu me chamo|eu sou( o| a)?|sou( o| a)?|[eé]( o| a)?)\s+/i,'');
+  return t.split(/\s+/).filter(Boolean).map(w=>/^(da|de|do|das|dos|e)$/i.test(w)?w.toLowerCase():w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ').slice(0,60)};
+let busy=false;
+async function join(){
+  const name=clean($('nm').value);
+  if(name.length<2){$('err').textContent='Diga ou digite seu nome.';$('nm').focus();return}
+  if(busy)return;busy=true;$('join').textContent='Entrando...';$('err').textContent='';unlock();
+  try{
+    let p;
+    const ok=await mutate(st=>{p={id:Date.now()+'-'+Math.random().toString(36).slice(2,6),n:st.next++,name,t:Date.now(),qr:1};st.queue.push(p)});
+    if(!ok)throw 0;
+    me=p;ls.set(KEY,JSON.stringify(me));alertedSeq=S.seq;render();
+    say(`${name}, sua senha é ${p.n}.`);
+  }catch(e){$('err').textContent='Não consegui entrar na fila. Verifique a internet e tente de novo.'}
+  busy=false;$('join').textContent='Entrar na fila';
+}
+$('join').onclick=join;
+$('nm').addEventListener('keydown',e=>{if(e.key==='Enter')join()});
+$('leave').onclick=async()=>{if(!me)return;const id=me.id;try{await mutate(st=>{st.queue=st.queue.filter(x=>x.id!==id)})}catch(e){}me=null;ls.del(KEY);render()};
+$('again').onclick=()=>{me=null;ls.del(KEY);$('nm').value='';render()};
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR)$('mic').style.display='none';
+else{
+  const rec=new SR();rec.lang='pt-BR';rec.interimResults=true;let on=false;
+  rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;$('nm').value=clean(t)};
+  rec.onerror=e=>{$('err').textContent=/not-allowed/.test(e.error)?'Microfone bloqueado. Digite seu nome.':e.error==='no-speech'?'Não ouvi. Tente de novo ou digite.':''};
+  rec.onend=()=>{on=false;$('mic').classList.remove('on');$('micl').textContent='FALAR MEU NOME';if(clean($('nm').value).length>=2)$('join').focus()};
+  $('mic').onclick=()=>{unlock();if(on){rec.stop();return}try{rec.start();on=true;$('mic').classList.add('on');$('micl').textContent='OUVINDO... DIGA SEU NOME';$('err').textContent=''}catch(e){}};
+}
+
+/* ---------- ao vivo ---------- */
+if(sala&&db){
+  refresh();
+  db.channel('entrar-'+sala).on('postgres_changes',{event:'*',schema:'public',table:'filas',filter:'sala=eq.'+sala},p=>{if(p.new&&p.new.estado)apply(p.new)}).subscribe();
+  setInterval(refresh,4000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+  (async()=>{try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}})();
+  if(!me)show('vForm');
+}
+}
+</script>
+</body>
+</html>

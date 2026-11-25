@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cartaz FilaVoz</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+/* VOICE: aviso de parede, lido de pé a dois metros
+   IDEA: a placa "retire sua senha" da recepção
+   PICTURE: o QR code grande no centro da folha
+   COLOUR and TYPE: branco, preto, faixa vermelha; Archivo
+   LAYOUT: controles em cima (somem na impressão), folha A4 embaixo */
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:#e9ebee;color:#14161a;font:16px/1.45 Archivo,system-ui,sans-serif}
+.ctl{max-width:720px;margin:0 auto;padding:18px 16px;display:grid;gap:10px}
+.ctl h1{margin:0;font-size:24px}
+label{font-weight:700;font-size:14px}
+input{width:100%;height:48px;border-radius:12px;border:1px solid #cfd3d9;font:16px Archivo,sans-serif;padding:0 12px;margin-top:4px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{height:48px;border-radius:12px;border:0;background:#14161a;color:#fff;font:700 16px Archivo,sans-serif;padding:0 18px;cursor:pointer}
+button.lt{background:#fff;color:#14161a;border:1px solid #cfd3d9}
+button:focus-visible,input:focus-visible{outline:3px solid #1f5fd6;outline-offset:2px}
+.hint{font-size:14px;color:#555}
+.sheet{width:min(720px,calc(100% - 32px));aspect-ratio:210/297;margin:0 auto 40px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}
+.top{width:100%;background:#d7262e;color:#fff;padding:5% 6% 4%}
+.top .pl{font-size:clamp(16px,3.4vw,26px);font-weight:700;opacity:.9;overflow-wrap:anywhere}
+.top h2{font-size:clamp(30px,8vw,62px);line-height:1;margin:2% 0 0;font-weight:900;text-wrap:balance}
+.qr{width:52%;margin:6% 0 3%}.qr svg{width:100%;height:auto;display:block}
+.steps{list-style:none;padding:0 8%;margin:0;display:grid;gap:2.2%;width:100%;text-align:left;font-size:clamp(14px,3.2vw,24px);font-weight:700}
+.steps li{display:flex;gap:12px;align-items:center}
+.steps b{flex:none;width:1.8em;height:1.8em;border-radius:50%;background:#14161a;color:#fff;display:grid;place-items:center}
+.foot{margin-top:auto;padding:3% 6%;font-size:clamp(10px,2vw,14px);color:#666;overflow-wrap:anywhere}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}.ctl{display:none}
+  .sheet{width:210mm;height:297mm;aspect-ratio:auto;margin:0;box-shadow:none}
+  .top{-webkit-print-color-adjust:exact;print-color-adjust:exact}.steps b{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="ctl">
+  <h1>Cartaz com QR code</h1>
+  <div><label for="sala">Código da sala (o mesmo do app do consultório)</label><input id="sala" placeholder="ex: dr-paulo-dentista-5512"></div>
+  <div><label for="local">Nome que aparece no cartaz</label><input id="local" placeholder="ex: Consultório Dr. Paulo"></div>
+  <div class="row"><button id="print">Imprimir cartaz</button><button class="lt" id="copy">Copiar link do paciente</button></div>
+  <p class="hint" id="msg">No celular, use "Compartilhar → Imprimir" do Chrome se o botão não abrir a impressão.</p>
+</div>
+<div class="sheet">
+  <div class="top"><div class="pl" id="pl">Seu consultório</div><h2>Chegou? Entre na fila pelo celular</h2></div>
+  <div class="qr" id="qr"></div>
+  <ol class="steps">
+    <li><b>1</b>Aponte a câmera do celular para o código</li>
+    <li><b>2</b>Fale ou digite o seu nome</li>
+    <li><b>3</b>Aguarde: o celular avisa quando for a sua vez</li>
+  </ol>
+  <div class="foot" id="ft"></div>
+</div>
+<script>
+{
+const $=id=>document.getElementById(id);
+const P=new URLSearchParams(location.search);
+$('sala').value=P.get('sala')||'';$('local').value=P.get('local')||'';
+const base=location.origin+location.pathname.replace(/[^/]*$/,'')+'entrar.html';
+const link=()=>{const s=$('sala').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'');const l=$('local').value.trim();
+  return base+'?sala='+encodeURIComponent(s)+(l?'&local='+encodeURIComponent(l):'')};
+function draw(){
+  const s=$('sala').value.trim();
+  $('pl').textContent=$('local').value.trim()||'Seu consultório';
+  if(!s){$('qr').innerHTML='<p style="color:#999;padding:20% 0">Digite o código da sala acima</p>';$('ft').textContent='';return}
+  try{const q=qrcode(0,'M');q.addData(link());q.make();$('qr').innerHTML=q.createSvgTag({cellSize:8,margin:2,scalable:true})}
+  catch(e){$('qr').textContent='Não consegui gerar o QR code.'}
+  $('ft').textContent='Sem câmera? Acesse: '+link();
+}
+$('sala').oninput=draw;$('local').oninput=draw;draw();
+$('print').onclick=()=>{if(!$('sala').value.trim()){$('sala').focus();return}window.print()};
+$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(link());$('msg').textContent='Link copiado.'}catch(e){$('msg').textContent=link()}};
+}
+</script>
+</body>
+</html>

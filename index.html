@@ -125,6 +125,7 @@ code{background:var(--bg);padding:2px 6px;border-radius:6px;overflow-wrap:anywhe
   <label class="tg"><input type="checkbox" id="spk"> Este aparelho fala as chamadas em voz alta</label>
   <p style="font-size:14px;margin:6px 0">Links para abrir direto em cada aparelho:</p>
   <div class="row" style="margin-top:4px"><button class="btn" id="cpMed">Copiar link do médico</button><button class="btn" id="cpRec">Copiar link da recepção</button></div>
+  <div class="row"><button class="btn" id="cartaz">Cartaz com QR code para pacientes</button></div>
   <div class="row"><button class="btn" id="swap">Trocar sala ou função</button><button class="btn" id="reset" style="color:var(--red)">Zerar o dia</button></div>
   <div class="row" style="justify-content:flex-end"><button class="btn dk" id="mnx">Fechar</button></div>
 </div></div>
@@ -284,6 +285,7 @@ $('spk').onchange=e=>ls.set('fv-fala-'+modo,e.target.checked?'1':'0');
 const copy=async t=>{try{await navigator.clipboard.writeText(t);toast('Link copiado. Envie pelo WhatsApp.')}catch(e){dialog('Copie o link',`<input value="${esc(t)}" readonly>`,null)}};
 $('cpMed').onclick=()=>copy(linkFor('med'));
 $('cpRec').onclick=()=>copy(linkFor('rec'));
+$('cartaz').onclick=()=>{location.href='cartaz.html?sala='+encodeURIComponent(sala)};
 $('swap').onclick=()=>{$('mn').style.display='none';$('sala').value=sala;$('setup').style.display='grid'};
 $('reset').onclick=()=>{$('mn').style.display='none';dialog('Zerar o dia?','<p style="margin:0">Apaga a fila, quem está em atendimento e o histórico de hoje, e volta a senha para 1, nos dois aparelhos.</p>',()=>mutate(st=>{const s=st.seq;Object.assign(st,EMPTY(),{seq:s})}))};
 
