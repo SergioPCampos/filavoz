@@ -42,7 +42,7 @@ button:focus-visible,input:focus-visible{outline:3px solid #1f5fd6;outline-offse
 </head>
 <body>
 <div class="ctl">
-  <h1>Cartaz com QR code</h1>
+  <div class="row" style="align-items:center;justify-content:space-between"><h1>Cartaz com QR code</h1><button class="lt" id="back">← Voltar ao app</button></div>
   <div><label for="sala">Código da sala (o mesmo do app do consultório)</label><input id="sala" placeholder="ex: dr-paulo-dentista-5512"></div>
   <div><label for="local">Nome que aparece no cartaz</label><input id="local" placeholder="ex: Consultório Dr. Paulo"></div>
   <div class="row"><button id="print">Imprimir cartaz</button><button class="lt" id="copy">Copiar link do paciente</button></div>
@@ -74,6 +74,7 @@ function draw(){
   catch(e){$('qr').textContent='Não consegui gerar o QR code.'}
   $('ft').textContent='Sem câmera? Acesse: '+link();
 }
+$('back').onclick=()=>{location.href='./'};
 $('sala').oninput=draw;$('local').oninput=draw;draw();
 $('print').onclick=()=>{if(!$('sala').value.trim()){$('sala').focus();return}window.print()};
 $('copy').onclick=async()=>{try{await navigator.clipboard.writeText(link());$('msg').textContent='Link copiado.'}catch(e){$('msg').textContent=link()}};
